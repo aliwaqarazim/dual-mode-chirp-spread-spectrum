@@ -81,27 +81,7 @@ EbN0 = EbN0_lin(ii);
         R1 = (1/sqrt(N))*fft(rtilde_1,N); % FFT of downchirped signal
         R2 = (1/sqrt(N))*fft(rtilde_2,N); % FFT of upchirped signal
         %=================================================================
-        % Coherent Detection
-        %==================================================================
-        [val1_coh,~] = max(abs(real(R1)));
-        [val2_coh,~] = max(abs(real(R2)));
-        if val1_coh > val2_coh % Determine chirp rate and the phase shift
-            chirp_use_rx_coh = 0;
-            RR = real(R1);
-            RR_even = RR(2:2:end);
-            RR_odd = RR(1:2:end);
-        elseif val2_coh > val1_coh
-            chirp_use_rx_coh = 1;
-            RR = real(R2);
-            RR_even = RR(2:2:end);
-            RR_odd = RR(1:2:end);
-        end
-        [~,idx_rx_even_coh] = max(abs(real(RR_even)));
-        [~,idx_rx_odd_coh] = max(abs(real(RR_odd)));
-        data_psk_even_rx_coh = pskdemod(RR_even(idx_rx_even_coh),2);
-        data_psk_odd_rx_coh = pskdemod(RR_odd(idx_rx_odd_coh),2);
-        %=================================================================
-        % Semi-Coherent Detection
+        % Non-Coherent Detection
         %==================================================================
         [val1_nc,~] = max(abs(R1).^2);
         [val2_nc,~] = max(abs(R2).^2);
@@ -124,33 +104,24 @@ EbN0 = EbN0_lin(ii);
         %==================================================================
         % BER Evaluation
         %==================================================================
-        [bits_in_error_even_coh(kk),~]= biterr(idx_tx_even,idx_rx_even_coh);
-        [bits_in_error_odd_coh(kk),~]= biterr(idx_tx_odd,idx_rx_odd_coh);
-        [bits_in_error_data_even_coh(kk),~]= biterr(data_psk_even,data_psk_even_rx_coh);
-        [bits_in_error_data_odd_coh(kk),~]= biterr(data_psk_odd,data_psk_odd_rx_coh);
-        [bits_in_error_cu_coh(kk),~]= biterr(chirp_use,chirp_use_rx_coh);
-%         
+       
         [bits_in_error_even_nc(kk),~]= biterr(idx_tx_even,idx_rx_even_nc);
         [bits_in_error_odd_nc(kk),~]= biterr(idx_tx_odd,idx_rx_odd_nc);
         [bits_in_error_data_even_nc(kk),~]= biterr(data_psk_even,data_psk_even_rx_nc);
         [bits_in_error_data_odd_nc(kk),~]= biterr(data_psk_odd,data_psk_odd_rx_nc);
         [bits_in_error_cu_nc(kk),~]= biterr(chirp_use,chirp_use_rx_nc);
     end
-    ber_coh(ii) = (sum(bits_in_error_even_coh) + sum(bits_in_error_odd_coh) +...
-        sum(bits_in_error_data_even_coh) + sum(bits_in_error_data_odd_coh) + ...
-        sum(bits_in_error_cu_coh))/iter/nbits;
+    
     ber_nc(ii) = (sum(bits_in_error_even_nc) + sum(bits_in_error_odd_nc) +...
         sum(bits_in_error_data_even_nc) + sum(bits_in_error_data_odd_nc) + ...
         sum(bits_in_error_cu_nc))/iter/nbits;
 end
 %
-ber_coh
-ber_nc
+
 
 figure;
-semilogy(EbN0_dB,ber_coh,'--x','LineWidth',2,'MarkerSize',8); grid on; hold on;
 semilogy(EbN0_dB,ber_nc,'--o','LineWidth',2,'MarkerSize',8); grid on; hold on;
-legend('Coherent','Semi-coherent','Interpreter','latex');
+legend('Non-coherent','Interpreter','latex');
 xlabel('$E_b/N_0$, dB','Interpreter','latex')
 ylabel('BER','Interpreter','latex')
 ylim([10^-5 1]); xlim([EbN0_dB(1) EbN0_dB(end)])
